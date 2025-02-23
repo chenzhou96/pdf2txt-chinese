@@ -1,3 +1,9 @@
+# 备注
+
+本项目来自 https://github.com/flyyuan/pdf2txt-chinese  
+
+在此基础上做了本地化适配，并且写了一个powershell脚本用于批量处理某一个文件夹内的pdf文档。
+
 # pdf2txt-chinese
 
 colab-gpu:

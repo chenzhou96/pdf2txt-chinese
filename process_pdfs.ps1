@@ -36,6 +36,15 @@ if ($pdfFiles.Count -eq 0) {
     exit 0
 }
 
+# 创建日志文件路径
+$desktopPath = [System.Environment]::GetFolderPath("Desktop")
+$logFilePath = Join-Path $desktopPath "pdf_processing_errors.log"
+
+# 初始化日志文件
+if (Test-Path $logFilePath) {
+    Remove-Item $logFilePath
+}
+
 # 在循环中添加错误处理
 $total = $pdfFiles.Count
 $current = 0
@@ -47,10 +56,16 @@ foreach ($pdfFile in $pdfFiles) {
         $command = "& $pythonPath $mainGpuPyPath --encoding utf-8 $($pdfFile.FullName)"
         Write-Output "Running command: $command"
         
-        & $pythonPath $mainGpuPyPath --encoding utf-8 $pdfFile.FullName
+        # 捕获退出码
+        $exitCode = & $pythonPath $mainGpuPyPath --encoding utf-8 $pdfFile.FullName
+        if ($LASTEXITCODE -ne 0) {
+            throw "Python script failed with exit code $LASTEXITCODE"
+        }
         Write-Output "[SUCCESS] Processed $($pdfFile.Name)"
     }
     catch {
         Write-Warning "[FAILED] Error processing $($pdfFile.Name): $_"
+        # 将出错的PDF文件名写入日志文件
+        Add-Content -Path $logFilePath -Value "$($pdfFile.Name): $_"
     }
 }

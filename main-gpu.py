@@ -5,29 +5,38 @@ from tqdm import tqdm
 import os
 import numpy as np
 import argparse
+import sys
 
 # os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 def get_num_pages(pdf_path):
-    reader = PdfReader(pdf_path)
-    return len(reader.pages)
+    try:
+        reader = PdfReader(pdf_path)
+        return len(reader.pages)
+    except Exception as e:
+        print(f"Error getting number of pages: {e}")
+        sys.exit(1)
 
 def process_single_page(pdf_path, page_number, output_file):
-    reader = easyocr.Reader(['en', 'ch_sim'], gpu=True)
-    images = pdf2image.convert_from_path(pdf_path, dpi=250, first_page=page_number, last_page=page_number, poppler_path=r'D:\Program\poppler-24.08.0\Library\bin')
-    
-    if images:
-        np_image = np.array(images[0])
-        result = reader.readtext(np_image)
-        text = ' '.join([res[1] for res in result])
-        print(f"\nPage {page_number} Text:\n{text}")
+    try:
+        reader = easyocr.Reader(['en', 'ch_sim'], gpu=True)
+        images = pdf2image.convert_from_path(pdf_path, dpi=250, first_page=page_number, last_page=page_number, poppler_path=r'D:\Program\poppler-24.08.0\Library\bin')
         
-        # 将每一页的内容追加到文件中
-        with open(output_file, 'a', encoding='utf-8') as file:
-            file.write(text + "\n")
+        if images:
+            np_image = np.array(images[0])
+            result = reader.readtext(np_image)
+            text = ' '.join([res[1] for res in result])
+            print(f"\nPage {page_number} Text:\n{text}")
+            
+            # 将每一页的内容追加到文件中
+            with open(output_file, 'a', encoding='utf-8') as file:
+                file.write(text + "\n")
 
-    # 关闭reader以释放资源
-    del reader
+        # 关闭reader以释放资源
+        del reader
+    except Exception as e:
+        print(f"Error processing page {page_number}: {e}")
+        sys.exit(1)
 
 def extract_text_from_pdf(pdf_path, num_pages, output_file):
     for page_number in tqdm(range(1, num_pages + 1), desc="Processing Pages"):
@@ -55,4 +64,8 @@ def main():
     print("Text extraction and saving complete.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
